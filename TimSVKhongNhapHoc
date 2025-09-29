@@ -1,0 +1,103 @@
+
+Sub TimSVKhongNhapHoc()
+'Luu y khi ra sheet ket qua nho xoa dong tieu de va dien lai
+    Dim wsData As Worksheet
+    Dim wsResult As Worksheet
+    Dim LastRowData As Long
+    Dim LastColData As Long
+    Dim NextRowResult As Long
+    Dim i As Long
+    Dim j As Long
+    Dim ColResult As Long ' Bien dem cot tren sheet ket qua
+    
+    ' --------------------------------------------------------------------------
+    ' THIET LAP CAC THAM SO CAN CHU Y (KHONG DAU)
+    ' --------------------------------------------------------------------------
+    Const START_ROW_DATA As Long = 5      ' Bat dau kiem tra du lieu tu DONG SO 5
+    Const HEADER_ROW As Long = 4          ' Dong tieu de du lieu (Dong 4)
+    Const STATUS_COL_INDEX As Long = 7    ' Cot Nhap hoc (X) la Cot G (so 7)
+    Const RESULT_SHEET_NAME As String = "DanhSachKhongNhapHoc"
+    
+    ' Tat cap nhat man hinh de tang toc do xu ly
+    Application.ScreenUpdating = False
+    
+    ' --------------------------------------------------------------------------
+    ' BUOC 1: TAO HOAC LAM SACH SHEET KET QUA
+    ' --------------------------------------------------------------------------
+    On Error Resume Next
+    Set wsResult = ThisWorkbook.Sheets(RESULT_SHEET_NAME)
+    On Error GoTo 0
+    
+    If wsResult Is Nothing Then
+        Set wsResult = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+        wsResult.Name = RESULT_SHEET_NAME
+    Else
+        wsResult.Cells.Clear
+    End If
+    
+    NextRowResult = 1 ' Bat dau ghi du lieu tren sheet ket qua tu dong 1
+    
+    ' --------------------------------------------------------------------------
+    ' BUOC 2: LAP QUA TAT CA CAC SHEET DU LIEU
+    ' --------------------------------------------------------------------------
+    For Each wsData In ThisWorkbook.Sheets
+        
+        ' Bo qua sheet ket qua
+        If wsData.Name <> RESULT_SHEET_NAME Then
+        
+            ' Tim dong va cot cuoi cung co du lieu
+            LastRowData = wsData.Cells(wsData.Rows.Count, "B").End(xlUp).Row ' Dung Cot Ma SV (B) de tim dong cuoi cung
+            LastColData = wsData.Cells(HEADER_ROW, wsData.Columns.Count).End(xlToLeft).Column ' Tim cot tieu de cuoi cung
+            
+            ' Chi sao chep TIEU DE mot lan duy nhat (va loai bo cot Nhap hoc)
+            If NextRowResult = 1 Then
+                ColResult = 1
+                For j = 1 To LastColData
+                    If j <> STATUS_COL_INDEX Then ' BO QUA COT NHAP HOC (Cot G/7)
+                        wsResult.Cells(1, ColResult).Value = wsData.Cells(HEADER_ROW, j).Value
+                        ColResult = ColResult + 1
+                    End If
+                Next j
+                NextRowResult = 2 ' Bat dau sao chep du lieu tu dong 2 tren sheet ket qua
+            End If
+            
+            ' ------------------------------------------------------------------
+            ' BUOC 3: LAP VA KIEM TRA TUNG DONG
+            ' ------------------------------------------------------------------
+            For i = START_ROW_DATA To LastRowData
+                
+                ' Kiem tra neu o trong cot Nhap hoc (Cot G) bi TRONG
+                ' Su dung IsError de tranh loi Type Mismatch voi du lieu loi
+                If Not IsError(wsData.Cells(i, STATUS_COL_INDEX).Value) Then
+                    
+                    If wsData.Cells(i, STATUS_COL_INDEX).Value = "" Then
+                        
+                        ' Sao chep du lieu sang sheet ket qua, loai bo cot Nhap hoc
+                        ColResult = 1
+                        For j = 1 To LastColData
+                            If j <> STATUS_COL_INDEX Then ' BO QUA COT NHAP HOC (Cot G/7)
+                                wsResult.Cells(NextRowResult, ColResult).Value = wsData.Cells(i, j).Value
+                                ColResult = ColResult + 1
+                            End If
+                        Next j
+                        
+                        ' Tang bien dem dong ket qua len 1
+                        NextRowResult = NextRowResult + 1
+                    End If
+                    
+                End If
+                
+            Next i
+        End If
+    Next wsData
+    
+    ' --------------------------------------------------------------------------
+    ' BUOC 4: KET THUC VA THONG BAO
+    ' --------------------------------------------------------------------------
+    Application.ScreenUpdating = True
+    wsResult.Columns.AutoFit ' Tu dong dieu chinh do rong cot tren sheet ket qua
+    wsResult.Activate
+    
+    MsgBox "Hoan tat loc du lieu. Da tim thay " & NextRowResult - 2 & " sinh vien khong nhap hoc."
+
+End Sub
