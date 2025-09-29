@@ -1,0 +1,58 @@
+Sub XoaDongBangMaSinhVien()
+
+    Dim ws As Worksheet
+    Dim LastRow As Long
+    Dim i As Long
+    Dim StudentIDs As Variant
+    Dim ID As Variant
+    
+    ' ----------------------------------------------------------------------
+    ' 1. Khai bao mang chua cac ma sinh vien can xoa
+    ' ----------------------------------------------------------------------
+    StudentIDs = Array( _
+        "25091195", "25091275", "25091295", "25091261", "25091285", "25090821", _
+        "25090861", "25090863", "25090965", "25090940", "25090945", "25090946", _
+        "25090979", "25090899", "25090948", "25090773", "25090852", "25090858", _
+        "25090468", "25090484", "25090552", "25090519", "25090293", "25090146", _
+        "25090182", "25090143", "25090169", "25090361", "25090454", "25091161", _
+        "25091082", "25091105", "25091121", "25091065")
+    
+    ' Dat sheet va cot kiem tra
+    Set ws = ThisWorkbook.Sheets("Data_ALL")  ' <-- Thay ten sheet neu can
+    Const CheckColumn = "F"                 ' <-- Thay ten cot chua ma sinh vien neu khac
+    
+    ' Vo hieu hoa cap nhat man hinh de tang toc do
+    Application.ScreenUpdating = False
+    
+    ' 2. Xac dinh pham vi
+    LastRow = ws.Cells(ws.Rows.Count, CheckColumn).End(xlUp).Row
+    
+    ' 3. Lap nguoc va kiem tra dieu kien
+    For i = LastRow To 3 Step -1 ' Bat dau tu dong cuoi cung len dong 3 (bo qua tieu dfe)
+        
+        ' Lap qua tung ma trong mang StudentIDs
+        For Each ID In StudentIDs
+            
+            ' Kiem tra neu gia tri o hien tai bang ma sinh vien trong mang
+            If CStr(ws.Cells(i, CheckColumn).Value) = CStr(ID) Then
+                
+                ' Xoa toan bo dong
+                ws.Rows(i).Delete
+                
+                ' Thoat khoi vong lap ID (vi da tim thay va xoa) de tiet kiem thoi gian
+                Exit For
+            End If
+            
+        Next ID
+        
+    Next i
+    
+    ' Kich hoat lai cap nhat man hinh
+    Application.ScreenUpdating = True
+    
+    MsgBox "Hoàn thành xóa " & UBound(StudentIDs) + 1 & " ma sinh vien da chi dinh", vbInformation
+    
+End Sub
+
+
+
