@@ -1,0 +1,122 @@
+Sub Convert_XLS_To_XLSX_CleanData()
+
+    Dim wb As Workbook
+    Dim ws As Worksheet
+    Dim SourcePath As String
+    Dim TargetPath As String
+    Dim FldrPicker As FileDialog
+    Dim fso As Object
+    Dim folderObj As Object
+    Dim fileObj As Object
+    Dim fileCount As Long
+    Dim LastRow As Long
+    Dim Arr As Variant
+    Dim i As Long
+
+    ' Tăng tốc
+    With Application
+        .ScreenUpdating = False
+        .EnableEvents = False
+        .DisplayAlerts = False
+        .Calculation = xlCalculationManual
+    End With
+
+    On Error GoTo SafeExit
+
+    ' Chọn thư mục chứa file XLS
+    Set FldrPicker = Application.FileDialog(msoFileDialogFolderPicker)
+
+    With FldrPicker
+        .Title = "Chọn thư mục chứa file XLS"
+        If .Show <> -1 Then GoTo SafeExit
+        SourcePath = .SelectedItems(1)
+    End With
+
+    ' Thư mục xuất XLSX
+    TargetPath = SourcePath & "\Converted_XLSX"
+
+    Set fso = CreateObject("Scripting.FileSystemObject")
+
+    If Not fso.FolderExists(TargetPath) Then
+        fso.CreateFolder TargetPath
+    End If
+
+    Set folderObj = fso.GetFolder(SourcePath)
+
+    ' Duyệt từng file XLS
+    For Each fileObj In folderObj.Files
+
+        If LCase(fso.GetExtensionName(fileObj.Name)) = "xls" Then
+
+            Set wb = Workbooks.Open( _
+                        Filename:=fileObj.Path, _
+                        UpdateLinks:=0, _
+                        ReadOnly:=False)
+
+            ' Duyệt từng sheet
+            For Each ws In wb.Worksheets
+
+                LastRow = ws.Cells(ws.Rows.Count, "B").End(xlUp).Row
+
+                If LastRow > 1 Then
+
+                    '========================
+                    ' CỘT B - MSSV
+                    '========================
+                    Arr = ws.Range("B1:B" & LastRow).Value
+
+                    For i = 1 To UBound(Arr, 1)
+
+                        If Not IsEmpty(Arr(i, 1)) Then
+                            Arr(i, 1) = LTrim(Replace(Arr(i, 1), Chr(160), " "))
+                        End If
+
+                    Next i
+
+                    ws.Range("B1:B" & LastRow).Value = Arr
+
+                    '========================
+                    ' CỘT G - ĐIỂM CK
+                    '========================
+                    Arr = ws.Range("G1:G" & LastRow).Value
+
+                    For i = 1 To UBound(Arr, 1)
+
+                        If Not IsEmpty(Arr(i, 1)) Then
+                            Arr(i, 1) = Trim(Replace(Arr(i, 1), Chr(160), " "))
+                        End If
+
+                    Next i
+
+                    ws.Range("G1:G" & LastRow).Value = Arr
+
+                End If
+
+            Next ws
+
+            ' Lưu XLSX
+            wb.SaveAs _
+                Filename:=TargetPath & "\" & _
+                fso.GetBaseName(fileObj.Name) & ".xlsx", _
+                FileFormat:=xlOpenXMLWorkbook
+
+            wb.Close False
+
+            fileCount = fileCount + 1
+
+        End If
+
+    Next fileObj
+
+    MsgBox "Đã xử lý và xuất " & fileCount & " file XLSX.", vbInformation
+
+SafeExit:
+
+    With Application
+        .ScreenUpdating = True
+        .EnableEvents = True
+        .DisplayAlerts = True
+        .Calculation = xlCalculationAutomatic
+    End With
+
+End Sub
